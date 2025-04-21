@@ -25,3 +25,8 @@ dashboard. You are expected to publish your dashboard through
 [Quarto Pub](https://quarto.org/docs/publishing/quarto-pub.html), a free
 publishing service for static content created with Quarto. 
 
+This dashboard can be found at <https://stat541.visruth.com/interactive_dashboard>
+
+## Notes
+
+Memory is limited, so I had to convert the original xlsx data to a csv before reading it in. Apparently reading in an xlsx (using `{{readxl}}` at least) was relatively memory intensive, so using a csv is preferred.

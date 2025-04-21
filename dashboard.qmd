@@ -22,7 +22,6 @@ webr:
     - rnaturalearth
     - here
     - glue
-    - readxl
     - htmltools
     - htmlwidgets
     - RColorBrewer
@@ -40,6 +39,7 @@ webr:
 #| label: setup
 #| warning: false
 #| autorun: true
+#| include: false
 library(tidyverse)
 library(gt)
 library(here)
@@ -48,16 +48,9 @@ use("htmltools", c("HTML", "tags"))
 # use("here", "here") # TODO: not being recognized by renv?
 use("htmlwidgets", "onRender")
 use("RColorBrewer", "brewer.pal")
-use("readxl", "read_xlsx")
 use("scales", c("label_percent", "percent", "alpha"))
 
-df <- read_xlsx(
-  here(
-    "data",
-    "wgm2018-dataset-crosstabs-all-countries.xlsx"
-  ),
-  sheet = 2
-)
+df <- read_csv(here("data", "wellcome.csv"))
 
 df <- "0=Not assigned, 1=Africa,2=Africa,3=Africa,4=Africa,5=Africa,6=Americas,7=Americas,8=Americas,9=Asia,10=Asia,11=Asia,12=Asia,13=Middle East,14=Former Soviet Union,15=Europe,16=Europe,17=Europe,18=Asia" |>
   str_split(",") |>
@@ -85,6 +78,7 @@ region_colours <- brewer.pal(7, "Dark2")
 ```{webr}
 #| label: map-data
 #| autorun: true
+#| include: false
 library(leaflet)
 library(rnaturalearth)
 library(rnaturalearthdata) # NOTE: needed for renv
@@ -224,13 +218,6 @@ science |>
   )
 ```
 
-
-#### webR
-
-```{webr}
-print("Hello from webR!")
-```
-
 ## Column - 2
 
 ::: {.card title="Flash Facts"}
@@ -249,6 +236,8 @@ Surveyed respondents from **Egypt** expressed some of the *least* disbelief in t
 ```{webr}
 #| label: plotly
 #| title: Vaccine Safety and Efficacy
+#| autorun: true
+#| warning: false
 library(plotly)
 
 p <- vaccine |>
@@ -310,6 +299,8 @@ Percentage of people who agreed with the statement: *Vaccines are safe.*
 
 ```{webr}
 #| label: funky-plot
+#| autorun: true
+#| warning: false
 library(gghalves)
 # Taken from https://github.com/teunbrand/ggplot_tricks?tab=readme-ov-file#lets-begin
 my_fill <- aes(fill = after_scale(alpha(colour, 0.3)))
