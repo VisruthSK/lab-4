@@ -1,34 +1,59 @@
 ---
 title: "Trust in Science in the 2018 Global Health Monitor Report"
 format:
-  dashboard:
+  live-dashboard:
     theme: pulse
     orientation: columns
     nav-buttons: [github, linkedin]
     github: https://github.com/VisruthSK/lab-4
     linkedin: https://www.linkedin.com/in/visruthsk/
 logo: images/Wellcome_Trust_logo.svg
-logo-alt: stylized W above "wellcome" 
+logo-alt: stylized W above "wellcome"
 embed-resources: true
+engine: knitr
+resources:
+  - data
+webr:
+  render-df: gt-interactive # TODO: adjust the Data tabsets to rely on gt through this
+  packages:
+    - tidyverse
+    - gt
+    - rnaturalearthdata
+    - rnaturalearth
+    - here
+    - glue
+    - readxl
+    - htmltools
+    - htmlwidgets
+    - RColorBrewer
+    - scales
+    - leaflet
+    - sf
+    - plotly
+    - gghalves
+    - webr
 ---
 
-```{r}
+{{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{webr}
 #| label: setup
 #| warning: false
+#| autorun: true
 library(tidyverse)
 library(gt)
-library(rnaturalearthdata) # NOTE: needed for renv
 library(here)
 use("glue", "glue")
-use("readxl", "read_xlsx")
 use("htmltools", c("HTML", "tags"))
 # use("here", "here") # TODO: not being recognized by renv?
 use("htmlwidgets", "onRender")
 use("RColorBrewer", "brewer.pal")
+use("readxl", "read_xlsx")
 use("scales", c("label_percent", "percent", "alpha"))
 
 df <- read_xlsx(
   here(
+    "data",
     "wgm2018-dataset-crosstabs-all-countries.xlsx"
   ),
   sheet = 2
@@ -57,10 +82,12 @@ df <- "1=United States, 2=Egypt, 3=Morocco, 4=Lebanon, 5=Saudi Arabia, 6=Jordan,
 region_colours <- brewer.pal(7, "Dark2")
 ```
 
-```{r}
+```{webr}
 #| label: map-data
+#| autorun: true
 library(leaflet)
 library(rnaturalearth)
+library(rnaturalearthdata) # NOTE: needed for renv
 library(sf)
 
 science <- df |>
@@ -88,8 +115,9 @@ country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
   drop_na(scalerank)
 ```
 
-```{r}
+```{webr}
 #| label: vaccine-data
+#| include: false
 vaccine <- df |>
   drop_na(Q25, Q26) |>
   mutate(
@@ -116,8 +144,9 @@ vaccine <- df |>
 ::: {.card expandable="false"}
 Percentage of people who answered "a lot" or "some" to the question: *How much do you, personally, know about science? Do you know a lot, some, not much, or nothing at all?*
 
-```{r}
+```{webr}
 #| label: map
+#| autorun: true
 country_colours <- colorNumeric(
   palette = "Purples",
   domain = country_data$percent,
@@ -173,9 +202,12 @@ country_data |>
 
 #### Data
 
-```{r}
+```{webr}
 #| label: science-data
 #| expandable: false
+#| edit: false
+#| echo: false
+#| autorun: true
 science |>
   arrange(desc(percent)) |>
   gt() |>
@@ -190,6 +222,13 @@ science |>
     method = "factor",
     palette = alpha(region_colours, 0.5)
   )
+```
+
+
+#### webR
+
+```{webr}
+print("Hello from webR!")
 ```
 
 ## Column - 2
@@ -207,7 +246,7 @@ Surveyed respondents from **Egypt** expressed some of the *least* disbelief in t
 ## Column - 1
 
 ### Vaccine Safety and Efficacy {.tabset}
-```{r}
+```{webr}
 #| label: plotly
 #| title: Vaccine Safety and Efficacy
 library(plotly)
@@ -240,9 +279,11 @@ p <- vaccine |>
 ggplotly(p, tooltip = "text")
 ```
 
-```{r}
+```{webr}
 #| label: vaccine-safety-efficacy-gt
 #| title: Data
+#| edit: false
+#| echo: false
 vaccine |>
   mutate(tmp = (safe + effective) / 2) |> 
   arrange(tmp) |>
@@ -267,7 +308,7 @@ vaccine |>
 ::: {.card title = "Vaccine Safety by Region and Country"}
 Percentage of people who agreed with the statement: *Vaccines are safe.*
 
-```{r}
+```{webr}
 #| label: funky-plot
 library(gghalves)
 # Taken from https://github.com/teunbrand/ggplot_tricks?tab=readme-ov-file#lets-begin
@@ -322,9 +363,11 @@ vaccine_info |>
 ```
 :::
 
-```{r}
+```{webr}
 #| label: vaccine-data-gt
 #| title: Data
+#| edit: false
+#| echo: false
 vaccine_info |>
   ungroup() |>
   mutate(Region = fct_reorder(Region, percent, .desc = TRUE)) |>
