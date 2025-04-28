@@ -29,4 +29,4 @@ This dashboard can be found at <https://stat541.visruth.com/interactive_dashboar
 
 ## Notes
 
-Memory is limited, so I had to convert the original xlsx data to a csv before reading it in. Apparently reading in an xlsx (using `{{readxl}}` at least) was relatively memory intensive, so using a csv is preferred.
+Memory is limited, so I had to convert the original xlsx data to a csv before reading it in. Apparently reading in an xlsx (using `{{readxl}}` at least) was relatively memory intensive, so using a csv is preferred. I passed a pre-processed CSV to the dashboard.

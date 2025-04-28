@@ -14,7 +14,7 @@ engine: knitr
 resources:
   - data
 webr:
-  render-df: gt-interactive # TODO: adjust the Data tabsets to rely on gt through this
+  render-df: gt-interactive
   packages:
     - tidyverse
     - gt
@@ -37,18 +37,16 @@ webr:
 
 # Setup
 
-## Column - 1
+## Column - 1 {width="40%"}
 
-### Data and such {.tabset}
-
-#### Unmodifiable Setup
-::: {.card expandable="false"}
-This sets up the dashboard.
+### Data and such
 
 ```{webr}
-#| label: setup
-#| warning: false
+#| title: Data
+#| label: interactive-df
 #| autorun: true
+#| warning: false
+#| echo: false
 #| edit: false
 library(tidyverse)
 library(gt)
@@ -63,56 +61,9 @@ library(htmltools)
 use("glue", "glue")
 use("here", "here")
 
-df <- read_csv(here("data", "wellcome.csv"))
+original_df <- read_csv(here("data", "wellcome.csv"))
 
-df <- "0=Not assigned, 1=Africa,2=Africa,3=Africa,4=Africa,5=Africa,6=Americas,7=Americas,8=Americas,9=Asia,10=Asia,11=Asia,12=Asia,13=Middle East,14=Former Soviet Union,15=Europe,16=Europe,17=Europe,18=Asia" |>
-  str_split(",") |>
-  unlist() |>
-  str_trim() |>
-  as_tibble() |>
-  separate_wider_delim(value, "=", names = c("Regions_Report", "Region")) |>
-  mutate(Regions_Report = as.numeric(Regions_Report)) |>
-  right_join(df) |>
-  select(-Regions_Report)
-
-df <- "1=United States, 2=Egypt, 3=Morocco, 4=Lebanon, 5=Saudi Arabia, 6=Jordan, 8=Turkey, 9=Pakistan, 10=Indonesia, 11=Bangladesh, 12=United Kingdom, 13=France, 14=Germany, 15=Netherlands, 16=Belgium, 17=Spain, 18=Italy, 19=Poland, 20=Hungary, 21=Czech Republic, 22=Romania, 23=Sweden, 24=Greece, 25=Denmark, 26=Iran, 28=Singapore, 29=Japan, 30=China, 31=India, 32=Venezuela, 33=Brazil, 34=Mexico, 35=Nigeria, 36=Kenya, 37=Tanzania, 38=Israel, 39=Palestinian Territories, 40=Ghana, 41=Uganda, 42=Benin, 43=Madagascar, 44=Malawi, 45=South Africa, 46=Canada, 47=Australia, 48=Philippines, 49=Sri Lanka, 50=Vietnam, 51=Thailand, 52=Cambodia, 53=Laos, 54=Myanmar, 55=New Zealand, 57=Botswana, 60=Ethiopia, 61=Mali, 62=Mauritania, 63=Mozambique, 64=Niger, 65=Rwanda, 66=Senegal, 67=Zambia, 68=South Korea, 69=Taiwan, 70=Afghanistan, 71=Belarus, 72=Georgia, 73=Kazakhstan, 74=Kyrgyzstan, 75=Moldova, 76=Russia, 77=Ukraine, 78=Burkina Faso, 79=Cameroon, 80=Sierra Leone, 81=Zimbabwe, 82=Costa Rica, 83=Albania, 84=Algeria, 87=Argentina, 88=Armenia, 89=Austria, 90=Azerbaijan, 96=Bolivia, 97=Bosnia and Herzegovina, 99=Bulgaria, 100=Burundi, 103=Chad, 104=Chile, 105=Colombia, 106=Comoros, 108=Republic of Congo, 109=Croatia, 111=Cyprus, 114=Dominican Republic, 115=Ecuador, 116=El Salvador, 119=Estonia, 121=Finland, 122=Gabon, 124=Guatemala, 125=Guinea, 128=Haiti, 129=Honduras, 130=Iceland, 131=Iraq, 132=Ireland, 134=Ivory Coast, 137=Kuwait, 138=Latvia, 140=Liberia, 141=Libya, 143=Lithuania, 144=Luxembourg, 145=Macedonia, 146=Malaysia, 148=Malta, 150=Mauritius, 153=Mongolia, 154=Montenegro, 155=Namibia, 157=Nepal, 158=Nicaragua, 160=Norway, 163=Panama, 164=Paraguay, 165=Peru, 166=Portugal, 173=Serbia, 175=Slovakia, 176=Slovenia, 183=Eswatini, 184=Switzerland, 185=Tajikistan, 186=The Gambia, 187=Togo, 190=Tunisia, 191=Turkmenistan, 193=United Arab Emirates, 194=Uruguay, 195=Uzbekistan, 197=Yemen, 198=Kosovo, 202=Northern Cyprus" |>
-  str_split(",") |>
-  unlist() |>
-  str_trim() |>
-  as_tibble() |>
-  separate_wider_delim(value, "=", names = c("WP5", "Country")) |>
-  mutate(WP5 = as.numeric(WP5)) |>
-  right_join(df) |>
-  select(-WP5)
-
-cleaned_countries <- ne_countries(scale = "medium", returnclass = "sf") |>
-  mutate(
-    admin = case_when(
-      admin == "United States of America" ~ "United States",
-      admin == "Czechia" ~ "Czech Republic",
-      admin == "Palestine" ~ "Palestinian Territories",
-      admin == "Republic of the Congo" ~ "Republic of Congo",
-      admin == "Gambia" ~ "The Gambia",
-      admin == "United Republic of Tanzania" ~ "Tanzania",
-      admin == "North Macedonia" ~ "Macedonia",
-      admin == "Republic of Serbia" ~ "Serbia",
-      TRUE ~ admin
-    )
-  )
-
-print("Setup Complete")
-```
-:::
-
-#### Data
-
-```{webr}
-#| label: interactive-df
-#| autorun: true
-#| echo: false
-#| edit: false
-#| expandable: false
-df |>
+original_df |>
   gt() |>
   opt_interactive(
     use_search = TRUE,
@@ -126,15 +77,22 @@ df |>
 
 ## Column - 2
 
+### Modification Details {height="30%"}
 ::: {.card title="Modification Details"}
 
+The next card has an webR code chunk that allows you to freely exercise constraints on the data being visualized on the other pages. You can see the pre-processed `df` being created on the left, and can browse it through the Data tab. These won't react to your changes.
+
+There are some comments in the code detailing what lines do. After you make adjustments to the chunk, run it, then run the other code chunks.
 :::
 
-::: {.card title="webR modifications"}
+### webR
 
 ```{webr}
+#| title: webR modifications
 #| label: modify
 #| autorun: true
+#| define: 
+#|   -
 print("Hello World")
 
 # Change the {{RColorBrewer}} colour palette
@@ -145,18 +103,31 @@ region_colours <- brewer.pal(7, "Dark2")
 # https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf
 
 # Filter the data to include certain countries or regions.
-df <- df |> filter(Region !%in% c("Not assigned"))
+df <- original_df |> filter(!Region %in% c("Not assigned"))
 # df <- df |> filter(Country != "United States")
+
+country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
+  mutate(
+    admin = case_when(
+      admin == "United States of America" ~ "United States",
+      admin == "Czechia" ~ "Czech Republic",
+      admin == "Palestine" ~ "Palestinian Territories",
+      admin == "Republic of the Congo" ~ "Republic of Congo",
+      admin == "Gambia" ~ "The Gambia",
+      admin == "United Republic of Tanzania" ~ "Tanzania",
+      admin == "North Macedonia" ~ "Macedonia",
+      admin == "Republic of Serbia" ~ "Serbia",
+      TRUE ~ admin
+    )
+  ) |>
+  right_join(science, by = join_by(admin == Country)) |>
+  drop_na(scalerank)
 
 science <- df |>
   drop_na(Q1) |>
   mutate(science = Q1 < 3, across(c(Country, Region), fct)) |>
   group_by(Country, Region) |>
   summarize(percent = mean(science), .groups = "drop")
-
-country_data <- cleaned_countries |>
-  right_join(science, by = join_by(admin == Country)) |>
-  drop_na(scalerank)
 
 vaccine <- df |>
   drop_na(Q25, Q26) |>
@@ -184,7 +155,6 @@ default_interactive_table_options <- \(data)
     page_size_default = 50
   )
 ```
-:::
 
 # Science
 
@@ -200,6 +170,7 @@ Percentage of people who answered "a lot" or "some" to the question: *How much d
 ```{webr}
 #| label: map
 #| autorun: true
+#| max-lines: 10
 country_colours <- colorNumeric(
   palette = "Purples",
   domain = country_data$percent,
@@ -238,7 +209,7 @@ country_data |>
   ") |>
   addControl(
     html = tags$div(
-      tags$h4(
+      tags$h6(
         style = "margin-bottom: 2px; margin-top: 2px; text-align:center;",
         "Perceived Science Knowledge per Country ('a lot' or 'some')"
       ),
@@ -255,8 +226,10 @@ country_data |>
 #### Data
 
 ```{webr}
-#| label: science-data
+#| label: science-data-gt
 #| max-lines: 5
+#| autorun: true
+#| expandable: false
 science |>
   arrange(desc(percent)) |>
   gt() |>
@@ -277,13 +250,17 @@ science |>
 
 ## Column - 2
 
-::: {.card title="Flash Facts"}
-**Americans** had the *highest* percentage of respondents who perceived themselves as being knowledgeable about science (~83%); however, around 10% of respondents *disagreed* on the safety of vaccines and about 5% of respondents *disputed* vaccines' effectiveness.
-:::
+```{ojs}
+//| echo: false
+//| title: "Flash Facts"
+md`**Americans** had the *highest* percentage of respondents who perceived themselves as being knowledgeable about science (~83%); however, around 10% of respondents *disagreed* on the safety of vaccines and about 5% of respondents *disputed* vaccines' effectiveness.`
+```
 
-::: {.card title="Flash Facts"}
-Surveyed respondents from **Egypt** expressed some of the *least* disbelief in the effectiveness (~0.5%) and safety (~0.3%) amongst all respondents. This stands in stark contrast to the United States.
-:::
+```{ojs}
+//| echo: false
+//| title: "Flash Facts"
+md`Surveyed respondents from **Egypt** expressed some of the *least* disbelief in the effectiveness (~0.5%) and safety (~0.3%) amongst all respondents. This stands in stark contrast to the United States.`
+```
 
 # Vaccine Belief
 
@@ -291,11 +268,13 @@ Surveyed respondents from **Egypt** expressed some of the *least* disbelief in t
 
 ### Vaccine Safety and Efficacy {.tabset}
 
+#### Vaccine Safety and Efficacy
+
 ```{webr}
 #| label: plotly
-#| title: Vaccine Safety and Efficacy
 #| autorun: true
 #| warning: false
+#| max-lines: 10
 library(plotly)
 
 p <- vaccine |>
@@ -326,14 +305,15 @@ p <- vaccine |>
 ggplotly(p, tooltip = "text")
 ```
 
+#### Data
+
 ```{webr}
 #| label: vaccine-safety-efficacy-gt
-#| title: Data
 #| max-lines: 5
+#| autorun: true
+#| expandable: false
 vaccine |>
-  mutate(tmp = (safe + effective) / 2) |>
-  arrange(tmp) |>
-  select(-tmp) |>
+  arrange((safe + effective) / 2) |>
   gt() |>
   fmt_percent(columns = c(safe, effective), decimals = 1) |>
   cols_label(
@@ -352,13 +332,16 @@ vaccine |>
 
 ### Vaccine Belief by Region and Country {.tabset}
 
-::: {.card title = "Vaccine Safety by Region and Country"}
+#### Vaccine Safety by Region and Country
+
+::: {.card}
 Percentage of people who agreed with the statement: *Vaccines are safe.*
 
 ```{webr}
 #| label: funky-plot
 #| autorun: true
 #| warning: false
+#| max-lines: 10
 library(gghalves)
 # Taken from https://github.com/teunbrand/ggplot_tricks?tab=readme-ov-file#lets-begin
 my_fill <- aes(fill = after_scale(alpha(colour, 0.3)))
@@ -411,11 +394,13 @@ vaccine_info |>
 ```
 :::
 
+#### Data
+
 ```{webr}
 #| label: vaccine-data-gt
-#| title: Data
 #| max-lines: 5
-#| expandable: true
+#| autorun: true
+#| expandable: false
 vaccine_info |>
   ungroup() |>
   mutate(Region = fct_reorder(Region, percent, .desc = TRUE)) |>
