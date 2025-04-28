@@ -35,20 +35,33 @@ webr:
 
 {{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
 
+# Setup
+
+## Column - 1
+
+### Data and such {.tabset}
+
+#### Unmodifiable Setup
+::: {.card expandable="false"}
+This sets up the dashboard.
+
 ```{webr}
 #| label: setup
 #| warning: false
 #| autorun: true
-#| include: false
+#| edit: false
 library(tidyverse)
 library(gt)
-library(here)
+library(leaflet)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(RColorBrewer)
+library(scales)
+library(htmlwidgets)
+library(htmltools)
 use("glue", "glue")
-use("htmltools", c("HTML", "tags"))
-# use("here", "here") # TODO: not being recognized by renv?
-use("htmlwidgets", "onRender")
-use("RColorBrewer", "brewer.pal")
-use("scales", c("label_percent", "percent", "alpha"))
+use("here", "here")
 
 df <- read_csv(here("data", "wellcome.csv"))
 
@@ -72,25 +85,7 @@ df <- "1=United States, 2=Egypt, 3=Morocco, 4=Lebanon, 5=Saudi Arabia, 6=Jordan,
   right_join(df) |>
   select(-WP5)
 
-region_colours <- brewer.pal(7, "Dark2")
-```
-
-```{webr}
-#| label: map-data
-#| autorun: true
-#| include: false
-library(leaflet)
-library(rnaturalearth)
-library(rnaturalearthdata) # NOTE: needed for renv
-library(sf)
-
-science <- df |>
-  drop_na(Q1) |>
-  mutate(science = Q1 < 3, across(c(Country, Region), fct)) |>
-  group_by(Country, Region) |>
-  summarize(percent = mean(science), .groups = "drop")
-
-country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
+cleaned_countries <- ne_countries(scale = "medium", returnclass = "sf") |>
   mutate(
     admin = case_when(
       admin == "United States of America" ~ "United States",
@@ -101,17 +96,68 @@ country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
       admin == "United Republic of Tanzania" ~ "Tanzania",
       admin == "North Macedonia" ~ "Macedonia",
       admin == "Republic of Serbia" ~ "Serbia",
-      admin == "Republic of Serbia" ~ "Serbia",
       TRUE ~ admin
     )
-  ) |>
-  right_join(science, by = join_by(admin == Country)) |>
-  drop_na(scalerank)
+  )
+
+print("Setup Complete")
 ```
+:::
+
+#### Data
 
 ```{webr}
-#| label: vaccine-data
-#| include: false
+#| label: interactive-df
+#| autorun: true
+#| echo: false
+#| edit: false
+#| expandable: false
+df |>
+  gt() |>
+  opt_interactive(
+    use_search = TRUE,
+    use_resizers = TRUE,
+    use_compact_mode = TRUE,
+    use_highlight = TRUE,
+    use_page_size_select = TRUE,
+    page_size_default = 50
+  )
+```
+
+## Column - 2
+
+::: {.card title="Modification Details"}
+
+:::
+
+::: {.card title="webR modifications"}
+
+```{webr}
+#| label: modify
+#| autorun: true
+print("Hello World")
+
+# Change the {{RColorBrewer}} colour palette
+region_colours <- brewer.pal(7, "Dark2")
+# region_colours <- brewer.pal(7, "Pastel2")
+
+# Use `display.brewer.all()` to see palettes exposed by {{RColorBrewer}}
+# https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf
+
+# Filter the data to include certain countries or regions.
+df <- df |> filter(Region !%in% c("Not assigned"))
+# df <- df |> filter(Country != "United States")
+
+science <- df |>
+  drop_na(Q1) |>
+  mutate(science = Q1 < 3, across(c(Country, Region), fct)) |>
+  group_by(Country, Region) |>
+  summarize(percent = mean(science), .groups = "drop")
+
+country_data <- cleaned_countries |>
+  right_join(science, by = join_by(admin == Country)) |>
+  drop_na(scalerank)
+
 vaccine <- df |>
   drop_na(Q25, Q26) |>
   mutate(
@@ -125,7 +171,20 @@ vaccine <- df |>
     effective = mean(effective),
     .groups = "drop"
   )
+
+# Set the default interactive table options which are applied to tables on other pages
+default_interactive_table_options <- \(data)
+  opt_interactive(
+    data,
+    use_search = TRUE,
+    use_resizers = TRUE,
+    use_compact_mode = TRUE,
+    use_highlight = TRUE,
+    use_page_size_select = TRUE,
+    page_size_default = 50
+  )
 ```
+:::
 
 # Science
 
@@ -174,7 +233,6 @@ country_data |>
   ) |> 
   onRender("
     function(el, x) {
-      // Select the map container element (el) and set its background style
       el.style.backgroundColor = 'transparent';
     }
   ") |>
@@ -198,10 +256,7 @@ country_data |>
 
 ```{webr}
 #| label: science-data
-#| expandable: false
-#| edit: false
-#| echo: false
-#| autorun: true
+#| max-lines: 5
 science |>
   arrange(desc(percent)) |>
   gt() |>
@@ -215,8 +270,10 @@ science |>
     columns = Region,
     method = "factor",
     palette = alpha(region_colours, 0.5)
-  )
+  ) |>
+  default_interactive_table_options()
 ```
+
 
 ## Column - 2
 
@@ -233,6 +290,7 @@ Surveyed respondents from **Egypt** expressed some of the *least* disbelief in t
 ## Column - 1
 
 ### Vaccine Safety and Efficacy {.tabset}
+
 ```{webr}
 #| label: plotly
 #| title: Vaccine Safety and Efficacy
@@ -271,12 +329,11 @@ ggplotly(p, tooltip = "text")
 ```{webr}
 #| label: vaccine-safety-efficacy-gt
 #| title: Data
-#| edit: false
-#| echo: false
+#| max-lines: 5
 vaccine |>
-  mutate(tmp = (safe + effective) / 2) |> 
+  mutate(tmp = (safe + effective) / 2) |>
   arrange(tmp) |>
-  select(-tmp) |> 
+  select(-tmp) |>
   gt() |>
   fmt_percent(columns = c(safe, effective), decimals = 1) |>
   cols_label(
@@ -287,7 +344,8 @@ vaccine |>
     columns = Region,
     method = "factor",
     palette = alpha(region_colours, 0.5)
-  )
+  ) |>
+  default_interactive_table_options()
 ```
 
 ## Column - 2
@@ -313,7 +371,6 @@ vaccine_info <- df |>
     vaccine = Q25 < 3,
     across(c(Country, Region), fct)
   ) |>
-  filter(Region != "Not assigned") |>
   group_by(Region, Country) |>
   summarize(percent = mean(vaccine), .groups = "drop_last")
 
@@ -357,8 +414,8 @@ vaccine_info |>
 ```{webr}
 #| label: vaccine-data-gt
 #| title: Data
-#| edit: false
-#| echo: false
+#| max-lines: 5
+#| expandable: true
 vaccine_info |>
   ungroup() |>
   mutate(Region = fct_reorder(Region, percent, .desc = TRUE)) |>
@@ -373,5 +430,6 @@ vaccine_info |>
     columns = Region,
     method = "factor",
     palette = alpha(region_colours, 0.5)
-  )
+  ) |>
+  default_interactive_table_options()
 ```
