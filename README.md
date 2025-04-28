@@ -1,4 +1,5 @@
-# Transforming a Static Dashboard into an Interactive Dashboard"
+# Transforming a Static Dashboard into an Interactive Dashboard
+[![Render Dashboard](https://github.com/VisruthSK/lab-4/actions/workflows/quarto.yml/badge.svg)](https://github.com/VisruthSK/lab-4/actions/workflows/quarto.yml)
 
 For this lab assignment, you are tasked with transforming your previous static
 dashboard into an interactive dashboard using either Shiny or webR. 
