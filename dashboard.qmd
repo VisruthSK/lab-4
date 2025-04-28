@@ -79,10 +79,9 @@ original_df |>
 
 ### Modification Details {height="30%"}
 ::: {.card title="Modification Details"}
-
 The next card has an webR code chunk that allows you to freely exercise constraints on the data being visualized on the other pages. You can see the pre-processed `df` being created on the left, and can browse it through the Data tab. These won't react to your changes.
 
-There are some comments in the code detailing what lines do. After you make adjustments to the chunk, run it, then run the other code chunks.
+There are some comments in the code detailing what lines do. After you make adjustments to the chunk, run it, then run the other code chunks to reflect your changes.
 :::
 
 ### webR
@@ -91,44 +90,35 @@ There are some comments in the code detailing what lines do. After you make adju
 #| title: webR modifications
 #| label: modify
 #| autorun: true
-#| define: 
-#|   -
+#| define:
+#|   - top_science_country
+#|   - top_science_percentage
+#|   - top_science_vaccine_safety
+#|   - top_science_vaccine_effective
+#|   - top_vaccine_country
+#|   - top_vaccine_safety
+#|   - top_vaccine_effective
 print("Hello World")
 
-# Change the {{RColorBrewer}} colour palette
+# Change the {{RColorBrewer}} colour palette used for regions
+# Use `display.brewer.all()` to see palettes exposed by {{RColorBrewer}}
+# https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf
 region_colours <- brewer.pal(7, "Dark2")
 # region_colours <- brewer.pal(7, "Pastel2")
 
-# Use `display.brewer.all()` to see palettes exposed by {{RColorBrewer}}
-# https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf
-
+# ! CHANGE THIS TO AFFECT ALL VISUALS
 # Filter the data to include certain countries or regions.
 df <- original_df |> filter(!Region %in% c("Not assigned"))
 # df <- df |> filter(Country != "United States")
 
-country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
-  mutate(
-    admin = case_when(
-      admin == "United States of America" ~ "United States",
-      admin == "Czechia" ~ "Czech Republic",
-      admin == "Palestine" ~ "Palestinian Territories",
-      admin == "Republic of the Congo" ~ "Republic of Congo",
-      admin == "Gambia" ~ "The Gambia",
-      admin == "United Republic of Tanzania" ~ "Tanzania",
-      admin == "North Macedonia" ~ "Macedonia",
-      admin == "Republic of Serbia" ~ "Serbia",
-      TRUE ~ admin
-    )
-  ) |>
-  right_join(science, by = join_by(admin == Country)) |>
-  drop_na(scalerank)
-
+# Data regarding perceived science knowledge
 science <- df |>
   drop_na(Q1) |>
   mutate(science = Q1 < 3, across(c(Country, Region), fct)) |>
   group_by(Country, Region) |>
   summarize(percent = mean(science), .groups = "drop")
 
+# Data regarding vaccine beliefs
 vaccine <- df |>
   drop_na(Q25, Q26) |>
   mutate(
@@ -154,6 +144,40 @@ default_interactive_table_options <- \(data)
     use_page_size_select = TRUE,
     page_size_default = 50
   )
+
+# ! THESE CONTROL THE FLASH FACTS. DON'T CHANGE VARIABLE NAMES.
+# Highest perceived science knowledge
+top_science <- science |> slice_max(percent)
+top_science_country <- top_science |> pull(Country) |> as.character()
+top_science_percentage <- top_science |> pull(percent) |> percent()
+top_science_vaccine <- vaccine |> filter(Country == top_science_country)
+# Vaccine disbelief
+top_science_vaccine_safety <- (1 - top_science_vaccine |> pull(safe)) |> percent()
+top_science_vaccine_effective <- (1 - top_science_vaccine |> pull(effective)) |> percent()
+
+# Highest vaccine belief
+top_vaccine <- vaccine |> slice_min((safe + effective) / 2)
+top_vaccine_country <- top_vaccine |> pull(Country) |> as.character()
+top_vaccine_safety <- top_vaccine |> pull(safe) |> percent(0.1)
+top_vaccine_effective <- top_vaccine |> pull(effective) |> percent(0.1)
+
+
+country_data <- ne_countries(scale = "medium", returnclass = "sf") |>
+  mutate(
+    admin = case_when(
+      admin == "United States of America" ~ "United States",
+      admin == "Czechia" ~ "Czech Republic",
+      admin == "Palestine" ~ "Palestinian Territories",
+      admin == "Republic of the Congo" ~ "Republic of Congo",
+      admin == "Gambia" ~ "The Gambia",
+      admin == "United Republic of Tanzania" ~ "Tanzania",
+      admin == "North Macedonia" ~ "Macedonia",
+      admin == "Republic of Serbia" ~ "Serbia",
+      TRUE ~ admin
+    )
+  ) |>
+  right_join(science, by = join_by(admin == Country)) |>
+  drop_na(scalerank)
 ```
 
 # Science
@@ -252,14 +276,17 @@ science |>
 
 ```{ojs}
 //| echo: false
+//| error: false
 //| title: "Flash Facts"
-md`**Americans** had the *highest* percentage of respondents who perceived themselves as being knowledgeable about science (~83%); however, around 10% of respondents *disagreed* on the safety of vaccines and about 5% of respondents *disputed* vaccines' effectiveness.`
+md`**${top_science_country}** had the *highest* percentage of respondents who perceived themselves as being knowledgeable about science (${top_science_percentage}). However, around ${top_science_vaccine_safety} of respondents *disagreed* on the safety of vaccines and about ${top_science_vaccine_effective} of respondents *disagreed* on vaccines' effectiveness.`
 ```
+
 
 ```{ojs}
 //| echo: false
+//| error: false
 //| title: "Flash Facts"
-md`Surveyed respondents from **Egypt** expressed some of the *least* disbelief in the effectiveness (~0.5%) and safety (~0.3%) amongst all respondents. This stands in stark contrast to the United States.`
+md`Surveyed respondents from **${top_vaccine_country}** expressed some of the *least* disbelief in the effectiveness (${top_vaccine_effective}) and safety (${top_vaccine_safety}) amongst all respondents.`
 ```
 
 # Vaccine Belief
@@ -418,3 +445,5 @@ vaccine_info |>
   ) |>
   default_interactive_table_options()
 ```
+
+<!-- TODO: fix empty card in final tabset which splits data col into two -->
