@@ -77,9 +77,9 @@ original_df |>
 
 ## Column - 2
 
-### Modification Details {height="30%"}
+### Modification Details {height="20%"}
 ::: {.card title="Modification Details"}
-The next card has an webR code chunk that allows you to freely exercise constraints on the data being visualized on the other pages. You can see the pre-processed `df` being created on the left, and can browse it through the Data tab. These won't react to your changes.
+The next card has an webR code chunk that allows you to freely exercise constraints on the data being visualized on the other pages. You can see the pre-processed `df` on the left, but it won't react to your changes. Find these processed data at <https://stat541.visruth.com/data/wellcome.csv>.
 
 There are some comments in the code detailing what lines do. After you make adjustments to the chunk, run it, then run the other code chunks to reflect your changes.
 :::
